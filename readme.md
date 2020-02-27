@@ -1,5 +1,5 @@
 # jlovick/base-image
-# lynncyrin/base-image
+## Adapted From lynncyrin/base-image
 
 A personalized and well documented [docker](https://www.docker.com/) dev time base image.
 
