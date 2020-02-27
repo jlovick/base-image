@@ -1,0 +1,17 @@
+ChallengeResponseAuthentication no
+UsePAM no
+PrintMotd no
+X11Forwarding yes
+AllowTcpForwarding yes
+PermitTunnel no
+x11uselocalhost yes
+addressfamily inet
+
+Subsystem sftp internal-sftp
+Match Group sftp
+    ChrootDirectory %h
+    X11Forwarding no
+    AllowTcpForwarding no
+    AllowAgentForwarding no
+    PermitTunnel no
+    ForceCommand internal-sftp
