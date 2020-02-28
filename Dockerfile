@@ -295,6 +295,13 @@ RUN echo "deb https://dist.crystal-lang.org/apt crystal main" | tee /etc/apt/sou
 RUN apt-get update
 RUN apt install -y crystal
 
+# nim
+RUN curl https://nim-lang.org/choosenim/init.sh > /root/get_nim.sh
+RUN chmod a+x /root/get_nim.sh
+RUN /root/get_nim.sh -y
+RUN echo "export PATH=~/.nimble/bin:$PATH" >> /root/.profile
+
+#  End of computer langs
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 RUN cp /root/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc
 RUN mkdir -p /root/.oh-my-zsh/custom/themes
