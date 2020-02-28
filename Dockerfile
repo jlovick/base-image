@@ -320,10 +320,10 @@ COPY ssh_config /etc/ssh/ssh_config
 COPY sshd_config /etc/ssh/sshd_config
 
 # final clean up
+RUN cp ~/.profile /home/$UR/
 COPY zshrc /home/$UR/.zshrc
 COPY dir_colors /home/$UR/.dir_colors
 RUN cp ~/.oh-my-zsh /home/$UR/
-chown -R $UR.$UR /home/$UR/
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
@@ -335,6 +335,7 @@ SHELL ["/bin/bash", "-c"]
 
 #ENTRYPOINT ["/usr/bin/bash" "/usr/local/bin/entrypoint.sh"]
 ENTRYPOINT  ["/bin/bash", "-c"]
+chown -R $UR.$UR /home/$UR
 
 CMD tail -f /dev/null
 
