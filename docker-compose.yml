@@ -2,6 +2,7 @@ version: '3.4'
 services:
   base-image:
     container_name: BI-feb-27th
+    image: base-image/bi:latest
     build:
       context: .
       args:

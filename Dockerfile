@@ -214,7 +214,7 @@ RUN apt-get update -qqy \
   && ./configure --disable-install-doc \
   && make -j"$(nproc)" \
   && make install \
-  && apt-get purge -y --auto-remove bison libgdbm-dev ruby \
+  && apt-get purge -y --auto-remove ruby \
   && gem update --system \
   && rm -r /usr/src/ruby \
   && rm -rf /var/lib/apt/lists/*
@@ -248,7 +248,10 @@ RUN set -euxo pipefail \
 # RUSTLANG
 #   website: https://www.rust-lang.org/
 #   install docs: https://www.rust-lang.org/tools/install
-RUN curl https://sh.rustup.rs -ysSf | sh
+RUN curl https://sh.rustup.rs > /root/get_rust.sh
+RUN chmod a+x /root/get_rust.sh
+RUN /root/get_rust.sh -y
+RUN echo "source ~/.cargo/env" >> ~/.profile
 
 RUN apt update
 RUN apt install -y software-properties-common
@@ -334,6 +337,9 @@ RUN cp -r /root/.oh-my-zsh /home/$UN/.oh-my-zsh
 RUN cp /root/.tmux.conf /home/$UN/.tmux.conf
 RUN cp -r /root/.tmux /home/$UN/.tmux
 
+RUN cp -r /root/.rustup /home/$UN/.rustup
+RUN cp -r /root/.cargo /home/$UN/.cargo
+
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
@@ -342,7 +348,6 @@ WORKDIR /projects
 
 SHELL ["/bin/bash", "-c"]
 
-#ENTRYPOINT ["/usr/bin/bash" "/usr/local/bin/entrypoint.sh"]
 ENTRYPOINT  ["/bin/bash", "-c"]
 RUN chown -R $UN.$UN /home/$UN
 
