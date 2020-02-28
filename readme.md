@@ -20,10 +20,10 @@ If you're looking at this repo and thinking "I want this, but slightly different
 High level components added onto an ubuntu base: these can be enabled by editing the file
 
 - [x] python
-- [ ] golang
-- [ ] nodejs
-- [ ] rustlang
-- [ ] ruby
+- [x] golang
+- [x] nodejs
+- [x] rustlang
+- [x] ruby
 - [x] crystal
 
 
@@ -34,3 +34,6 @@ High level components added onto an ubuntu base: these can be enabled by editing
 - [x] vim
 
 ## Motivation and Context
+
+sometimes it nice to have a sane + (modern) development environment with the least hassle.
+nuff-said

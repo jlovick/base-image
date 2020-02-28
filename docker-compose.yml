@@ -1,8 +1,15 @@
-version: '3'
+version: '3.4'
 services:
   base-image:
-    build: .
+    container_name: BI-feb-27th
+    build:
+      context: .
+      args:
+        UN: jlovick
+
     stdin_open: true
     tty: true
     ports:
             - "22:22"
+
+

@@ -33,39 +33,52 @@ ARG DEBIAN_FRONTEND=noninteractive
 #   docs: https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html
 #   blog post: https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
 
-RUN mkdir -p /projects
-WORKDIR /projects
+RUN mkdir -p /source_packages
+WORKDIR /source_packages
 SHELL ["/bin/bash", "-c"]
+RUN apt update
 
+# more general utilities....
+# zsh, sshd etc
+RUN apt install -y zsh sudo net-tools iproute2 vim tzdata
 
-#work with the timezone
-#RUN set -euxo pipefail \
-#  && apt-get update \
-#  && apt install tzdata -y
+#===================
+# Timezone settings
+#===================
+ENV TZ=America/Regina
+RUN echo $TZ > /etc/timezone && \
+    touch /etc/localtime && \
+    rm /etc/localtime && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
+    dpkg-reconfigure -f noninteractive tzdata && \
+    date
 
-#ENV TZ=America/Regina
-#RUN echo $TZ > /etc/timezone && \
-#    rm /etc/localtime && \
-#    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
-#    dpkg-reconfigure -f noninteractive tzdata && \
-#    date
+#========================================
+# Add normal user with passwordless sudo
+#========================================
+ARG UN
+ENV NORMAL_USER $UN
+ENV NORMAL_GROUP $NORMAL_USER
+ENV NORMAL_USER_UID 998
+ENV NORMAL_USER_GID 997
+RUN groupadd -g ${NORMAL_USER_GID} ${NORMAL_GROUP}
 
+RUN useradd ${NORMAL_USER} --uid ${NORMAL_USER_UID} \
+         --shell /bin/zsh  --gid ${NORMAL_USER_GID} \
+         --create-home
+
+RUN echo "$UN:$UN" | chpasswd \
+  && passwd -e $UN \
+  && echo 'ALL ALL = (ALL) NOPASSWD: ALL' >> /etc/sudoers
+
+ENV NORMAL_USER_HOME /home/${NORMAL_USER}
 
 # APT
 # packages:
-#   curl - installs curl https://github.com/curl/curl
-#   git - installs git https://git-scm.com/
-#   shellcheck - installs https://github.com/koalaman/shellcheck for optional shell syntax linting
-#   build-essential - installs gcc / make / etc
-#   g++ - for building c++, necessary for python
-#   lsb-core - installs lsb_release for optionally inspecting os version
-#   zlib1g-dev - installs zlib https://github.com/madler/zlib, necessary for compilation (some resources are compressed)
-#   libssl-dev - installs https://github.com/openssl/openssl, necessary for ssl
-#   libffi-dev - installs https://sourceware.org/libffi/, necessary for python / ruby / etc to call c code
-#   file - installs https://github.com/file/file, requested by homebrew https://docs.brew.sh/Homebrew-on-Linux#debian-or-ubuntu
 RUN set -euxo pipefail \
   && apt-get update \
   && apt-get install -y \
+  	wget \
     curl \
     git \
     shellcheck \
@@ -75,6 +88,41 @@ RUN set -euxo pipefail \
     zlib1g-dev \
     libssl-dev \
     libffi-dev \
+    autoconf \
+    automake \
+    bzip2 \
+    file \
+    g++ \
+    gcc \
+    imagemagick \
+    libbz2-dev \
+    libc6-dev \
+    libcurl4-openssl-dev \
+    libdb-dev \
+    libevent-dev \
+    libffi-dev \
+    libgeoip-dev \
+    libglib2.0-dev \
+    libjpeg-dev \
+    liblzma-dev \
+    libmagickcore-dev \
+    libmagickwand-dev \
+    libmysqlclient-dev \
+    libncurses-dev \
+    libpng-dev \
+    libpq-dev \
+    libreadline-dev \
+    libsqlite3-dev \
+    libssl-dev \
+    libtool \
+    libwebp-dev \
+    libxml2-dev \
+    libxslt-dev \
+    libyaml-dev \
+    make \
+    patch \
+    xz-utils \
+    zlib1g-dev \
     file
 
 # HOMEBREW
@@ -94,6 +142,8 @@ RUN set -euxo pipefail \
   && ln -s ../Homebrew/bin/brew /home/linuxbrew/.linuxbrew/bin/ \
   && brew config \
   && echo "brew install done!"
+
+RUN echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.profile
 
 # PYTHON
 #   website: https://www.python.org/
@@ -139,12 +189,55 @@ RUN set -euxo pipefail \
   && pipenv --version \
   && echo "python install done!"
 
+#===========
+# Ruby time
+#===========
+ENV RUBY_MAJOR 2.7
+ENV RUBY_VERSION 2.7.0
+ENV RUBY_DOWNLOAD_SHA256 8c99aa93b5e2f1bc8437d1bbbefd27b13e7694025331f77245d0c068ef1f8cbe
+
+# skip installing gem documentation
+RUN echo 'install: --no-document\nupdate: --no-document' >> "$HOME/.gemrc"
+
+# some of ruby's build scripts are written in ruby
+# we purge this later to make sure our final image uses what we just built
+RUN apt-get update -qqy \
+  && apt-get install -y bison libgdbm-dev ruby \
+  && rm -rf /var/lib/apt/lists/* \
+  && mkdir -p /usr/src/ruby \
+  && curl -fSL -o ruby.tar.gz "http://cache.ruby-lang.org/pub/ruby/$RUBY_MAJOR/ruby-$RUBY_VERSION.tar.gz" \
+  && echo "$RUBY_DOWNLOAD_SHA256 *ruby.tar.gz" | sha256sum -c - \
+  && tar -xzf ruby.tar.gz -C /usr/src/ruby --strip-components=1 \
+  && rm ruby.tar.gz \
+  && cd /usr/src/ruby \
+  && autoconf \
+  && ./configure --disable-install-doc \
+  && make -j"$(nproc)" \
+  && make install \
+  && apt-get purge -y --auto-remove bison libgdbm-dev ruby \
+  && gem update --system \
+  && rm -r /usr/src/ruby \
+  && rm -rf /var/lib/apt/lists/*
+
+# install things globally, for great justice
+ENV GEM_HOME /usr/local/bundle
+ENV PATH $GEM_HOME/bin:$PATH
+
+
+RUN gem install bundler \
+  && bundle config --global path "$GEM_HOME" \
+  && bundle config --global bin "$GEM_HOME/bin" \
+  && bundle config --global silence_root_warning true
+
+# don't create ".bundle" in all our apps
+ENV BUNDLE_APP_CONFIG $GEM_HOME
+
 # GOLANG
 #   formula: https://formulae.brew.sh/formula/go
-# RUN brew install go
+RUN brew install go
 # disables go trying to build with extra c extensions
 # fixes errors like "gcc-5": executable file not found in $PATH
-# ENV CGO_ENABLED=0
+ENV CGO_ENABLED=0
 
 # NODE
 #   formula: https://formulae.brew.sh/formula/node
@@ -155,7 +248,12 @@ RUN set -euxo pipefail \
 # RUSTLANG
 #   website: https://www.rust-lang.org/
 #   install docs: https://www.rust-lang.org/tools/install
-# RUN curl https://sh.rustup.rs -ysSf | sh
+RUN curl https://sh.rustup.rs -ysSf | sh
+
+RUN apt install -y wget
+RUN bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)" \\
+	&& apt update
+
 
 # Crystal
 # see  https://github.com/crystal-lang/crystal/wiki/All-required-libraries
@@ -193,10 +291,10 @@ RUN echo "deb https://dist.crystal-lang.org/apt crystal main" | tee /etc/apt/sou
 RUN apt-get update
 RUN apt install -y crystal
 
-RUN apt install -y zsh sudo net-tools iproute2 vim
-
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 RUN cp ~/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc
+RUN mkdir ~/.oh-my-zsh/custom/themes
+COPY jlovick.zsh-theme ~/.oh-my-zsh/custom/themes/
 
 # create ssh system
 RUN apt install -y openssh-server
@@ -206,15 +304,7 @@ RUN mkdir /var/run/sshd \
 	&& chmod 0755 /var/run/sshd \
 	&& /usr/sbin/sshd
 
-ENV UN="jlovick"
 
-RUN useradd --create-home --shell /bin/zsh --groups sudo $UN  \
-    && echo "$UN:$UN" | chpasswd \
-    && passwd -e $UN \
-    && cp -r ~/.oh-my-zsh /home/$UN/ \
-    && cp /home/$UN/.oh-my-zsh/templates/zshrc.zsh-template /home/$UN/.zshrc \
-    && chown jlovick.jlovick -R /home/$UN/.oh-my-zsh \
-    && chown jlovick.jlovick -R /home/$UN/.zshrc
 
 RUN apt install -y x11-apps ## X11 demo applications (optional)
 RUN ifconfig | awk '/inet addr/{print substr($2,6)}' ## Display IP address (optional)
@@ -229,8 +319,19 @@ RUN git clone https://github.com/tmux/tmux.git \
 COPY ssh_config /etc/ssh/ssh_config
 COPY sshd_config /etc/ssh/sshd_config
 
+# final clean up
+COPY zshrc /home/$UR/.zshrc
+COPY dir_colors /home/$UR/.dir_colors
+RUN cp ~/.oh-my-zsh /home/$UR/
+chown -R $UR.$UR /home/$UR/
+
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
+
+RUN mkdir -p /projects
+WORKDIR /projects
+
+SHELL ["/bin/bash", "-c"]
 
 #ENTRYPOINT ["/usr/bin/bash" "/usr/local/bin/entrypoint.sh"]
 ENTRYPOINT  ["/bin/bash", "-c"]
