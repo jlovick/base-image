@@ -344,7 +344,6 @@ RUN cp -r /root/.oh-my-zsh /home/$UN/.oh-my-zsh
 RUN cp /root/.tmux.conf /home/$UN/.tmux.conf
 RUN cp -r /root/.tmux /home/$UN/.tmux
 
-#copy across needed language directories for running as a user
 RUN cp -r /root/.rustup /home/$UN/.rustup
 RUN cp -r /root/.cargo /home/$UN/.cargo
 RUN cp -r /root/.nimble /home/$UN/.nimble
