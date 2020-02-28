@@ -6,6 +6,7 @@ services:
       context: .
       args:
         UN: jlovick
+    entrypoint: /usr/bin/bash -c  /usr/local/bin/entrypoint.sh 
 
     stdin_open: true
     tty: true

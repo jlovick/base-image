@@ -250,7 +250,8 @@ RUN set -euxo pipefail \
 #   install docs: https://www.rust-lang.org/tools/install
 RUN curl https://sh.rustup.rs -ysSf | sh
 
-RUN apt install -y wget
+RUN apt update
+RUN apt install -y software-properties-common
 RUN bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)" \\
 	&& apt update
 
@@ -292,9 +293,10 @@ RUN apt-get update
 RUN apt install -y crystal
 
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-RUN cp ~/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc
-RUN mkdir ~/.oh-my-zsh/custom/themes
-COPY jlovick.zsh-theme ~/.oh-my-zsh/custom/themes/
+RUN cp /root/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc
+RUN mkdir -p /root/.oh-my-zsh/custom/themes
+COPY jlovick.zsh-theme /root/.oh-my-zsh/custom/themes/
+COPY dir_colors /root/.dir_colors
 
 # create ssh system
 RUN apt install -y openssh-server
@@ -315,15 +317,22 @@ RUN git clone https://github.com/tmux/tmux.git \
     && sh autogen.sh \
     && ./configure && make \
     && make install
+COPY tmux.conf /root/.tmux.conf
+RUN git clone https://github.com/tmux-plugins/tpm /root/.tmux/plugins/tpm
 
 COPY ssh_config /etc/ssh/ssh_config
 COPY sshd_config /etc/ssh/sshd_config
 
 # final clean up
-RUN cp ~/.profile /home/$UR/
-COPY zshrc /home/$UR/.zshrc
-COPY dir_colors /home/$UR/.dir_colors
-RUN cp ~/.oh-my-zsh /home/$UR/
+ARG UN
+RUN cp ~/.profile /home/$UN/.profile
+COPY zshrc /root/.zshrc
+COPY zshrc /home/$UN/.zshrc
+COPY dir_colors /home/$UN/.dir_colors
+COPY dir_colors /root/.dir_colors
+RUN cp -r /root/.oh-my-zsh /home/$UN/.oh-my-zsh
+RUN cp /root/.tmux.conf /home/$UN/.tmux.conf
+RUN cp -r /root/.tmux /home/$UN/.tmux
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
@@ -335,7 +344,7 @@ SHELL ["/bin/bash", "-c"]
 
 #ENTRYPOINT ["/usr/bin/bash" "/usr/local/bin/entrypoint.sh"]
 ENTRYPOINT  ["/bin/bash", "-c"]
-chown -R $UR.$UR /home/$UR
+RUN chown -R $UN.$UN /home/$UN
 
 CMD tail -f /dev/null
 
