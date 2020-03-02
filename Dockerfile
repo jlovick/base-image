@@ -301,6 +301,13 @@ RUN chmod a+x /root/get_nim.sh
 RUN /root/get_nim.sh -y
 RUN echo "export PATH=~/.nimble/bin:$PATH" >> /root/.profile
 
+# Elixir
+RUN wget https://packages.erlang-solutions.com/erlang-solutions_2.0_all.deb \
+    && sudo dpkg -i erlang-solutions_2.0_all.deb \
+    && apt update \
+    && apt install -y esl-erlang \
+           elixir
+
 #  End of computer langs
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 RUN cp /root/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc
