@@ -332,6 +332,22 @@ RUN mkdir lua_build \
     && make linux test \
     && sudo make install
 
+#java
+ARG JAVA_VERSION
+ARG JAVA_LICENSE_VERSION
+RUN add-apt-repository ppa:linuxuprising/java
+RUN apt update
+RUN echo oracle-java${JAVA_VERSION}-installer shared/accepted-oracle-license-v${JAVA_LICENSE_VERSION} select true |  /usr/bin/debconf-set-selections
+RUN apt install -y oracle-java${JAVA_VERSION}-set-default
+RUN java -version
+
+# clojure
+# RUN brew install clojure/tools/clojure #this brings in brew ruby :-(
+ARG CLOJURE_VERSION
+RUN curl -O https://download.clojure.org/install/linux-install-${CLOJURE_VERSION}.sh
+RUN chmod +x linux-install-${CLOJURE_VERSION}.sh
+RUN bash -c ./linux-install-${CLOJURE_VERSION}.sh
+
 
 #  End of computer langs
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
