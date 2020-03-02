@@ -307,6 +307,13 @@ RUN wget https://packages.erlang-solutions.com/erlang-solutions_2.0_all.deb \
     && apt update \
     && apt install -y esl-erlang \
            elixir
+# HASKEL
+# https://docs.haskellstack.org/en/stable/README/
+
+RUN curl -sSL https://get.haskellstack.org/ | sh
+
+
+
 
 #  End of computer langs
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
