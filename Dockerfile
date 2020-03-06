@@ -145,6 +145,15 @@ RUN set -euxo pipefail \
 
 RUN echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.profile
 
+# create ssh system [move this up to speed testing for adding languages ]
+RUN apt install -y openssh-server
+EXPOSE 22
+
+RUN mkdir /var/run/sshd \
+	&& chmod 0755 /var/run/sshd \
+	&& /usr/sbin/sshd
+
+
 # PYTHON
 #   website: https://www.python.org/
 #   source: https://github.com/python/cpython
@@ -170,7 +179,7 @@ RUN echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.profile
 # The last step is pip installing various python tools that I think are ✨ nice ✨.
 # And then testing their versions (relevant issue https://github.com/lynncyrin/base-image/issues/29)
 
-ENV PYTHON_VERSION="3.8.2"
+ARG PYTHON_VERSION
 RUN set -euxo pipefail \
   && git clone \
     --depth "1" \
@@ -192,9 +201,9 @@ RUN set -euxo pipefail \
 #===========
 # Ruby time
 #===========
-ENV RUBY_MAJOR 2.7
-ENV RUBY_VERSION 2.7.0
-ENV RUBY_DOWNLOAD_SHA256 8c99aa93b5e2f1bc8437d1bbbefd27b13e7694025331f77245d0c068ef1f8cbe
+ARG RUBY_MAJOR
+ARG RUBY_VERSION
+ARG RUBY_DOWNLOAD_SHA256
 
 # skip installing gem documentation
 RUN echo 'install: --no-document\nupdate: --no-document' >> "$HOME/.gemrc"
@@ -312,7 +321,32 @@ RUN wget https://packages.erlang-solutions.com/erlang-solutions_2.0_all.deb \
 
 RUN curl -sSL https://get.haskellstack.org/ | sh
 
+# Lua
 
+ARG LUA_VERSION
+RUN mkdir lua_build \
+    && cd lua_build \
+    && curl -R -O http://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz \
+    && tar -zxf lua-${LUA_VERSION}.tar.gz \
+    && cd lua-${LUA_VERSION} \
+    && make linux test \
+    && sudo make install
+
+#java
+ARG JAVA_VERSION
+ARG JAVA_LICENSE_VERSION
+RUN add-apt-repository ppa:linuxuprising/java
+RUN apt update
+RUN echo oracle-java${JAVA_VERSION}-installer shared/accepted-oracle-license-v${JAVA_LICENSE_VERSION} select true |  /usr/bin/debconf-set-selections
+RUN apt install -y oracle-java${JAVA_VERSION}-set-default
+RUN java -version
+
+# clojure
+# RUN brew install clojure/tools/clojure #this brings in brew ruby :-(
+ARG CLOJURE_VERSION
+RUN curl -O https://download.clojure.org/install/linux-install-${CLOJURE_VERSION}.sh
+RUN chmod +x linux-install-${CLOJURE_VERSION}.sh
+RUN bash -c ./linux-install-${CLOJURE_VERSION}.sh
 
 
 #  End of computer langs
@@ -321,16 +355,6 @@ RUN cp /root/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc
 RUN mkdir -p /root/.oh-my-zsh/custom/themes
 COPY jlovick.zsh-theme /root/.oh-my-zsh/custom/themes/
 COPY dir_colors /root/.dir_colors
-
-# create ssh system
-RUN apt install -y openssh-server
-EXPOSE 22
-
-RUN mkdir /var/run/sshd \
-	&& chmod 0755 /var/run/sshd \
-	&& /usr/sbin/sshd
-
-
 
 RUN apt install -y x11-apps ## X11 demo applications (optional)
 RUN ifconfig | awk '/inet addr/{print substr($2,6)}' ## Display IP address (optional)

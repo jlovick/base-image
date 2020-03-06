@@ -7,6 +7,15 @@ services:
       context: .
       args:
         UN: jlovick
+        LUA_VERSION: 5.3.5
+        PYTHON_VERSION: 3.8.2
+        RUBY_MAJOR: 2.7
+        RUBY_VERSION: 2.7.0
+        RUBY_DOWNLOAD_SHA256: 8c99aa93b5e2f1bc8437d1bbbefd27b13e7694025331f77245d0c068ef1f8cbe
+        CLOJURE_VERSION : 1.10.1.536
+        JAVA_VERSION: 13
+        JAVA_LICENSE_VERSION: 1-2
+
     entrypoint: /usr/bin/bash -c  /usr/local/bin/entrypoint.sh 
     stdin_open: true
     tty: true
