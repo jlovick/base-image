@@ -59,8 +59,8 @@ RUN echo $TZ > /etc/timezone && \
 ARG UN
 ENV NORMAL_USER $UN
 ENV NORMAL_GROUP $NORMAL_USER
-ENV NORMAL_USER_UID 998
-ENV NORMAL_USER_GID 997
+ARG NORMAL_USER_UID
+ARG NORMAL_USER_GID
 RUN groupadd -g ${NORMAL_USER_GID} ${NORMAL_GROUP}
 
 RUN useradd ${NORMAL_USER} --uid ${NORMAL_USER_UID} \
@@ -242,11 +242,15 @@ RUN gem install bundler \
 ENV BUNDLE_APP_CONFIG $GEM_HOME
 
 # GOLANG
-#   formula: https://formulae.brew.sh/formula/go
-RUN brew install go
-# disables go trying to build with extra c extensions
-# fixes errors like "gcc-5": executable file not found in $PATH
-ENV CGO_ENABLED=0
+
+ARG GO_VERSION
+ARG GO_OS
+ARG GO_ARCH
+RUN set -euxo pipefail \
+	&& wget https://dl.google.com/go/go$GO_VERSION.$GO_OS-$GO_ARCH.tar.gz \
+	&& tar -C /usr/local -xzf go$GO_VERSION.$GO_OS-$GO_ARCH.tar.gz
+
+RUN echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.profile
 
 # NODE
 #   formula: https://formulae.brew.sh/formula/node

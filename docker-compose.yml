@@ -7,11 +7,16 @@ services:
       context: .
       args:
         UN: jlovick
+        NORMAL_USER_UID: 1000
+        NORMAL_USER_GID: 1000
         LUA_VERSION: 5.3.5
         PYTHON_VERSION: 3.8.2
         RUBY_MAJOR: 2.7
         RUBY_VERSION: 2.7.0
         RUBY_DOWNLOAD_SHA256: 8c99aa93b5e2f1bc8437d1bbbefd27b13e7694025331f77245d0c068ef1f8cbe
+        GO_VERSION: 1.14
+        GO_OS: linux
+        GO_ARCH: amd64
         CLOJURE_VERSION : 1.10.1.536
         JAVA_VERSION: 13
         JAVA_LICENSE_VERSION: 1-2
