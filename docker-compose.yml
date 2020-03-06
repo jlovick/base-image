@@ -8,10 +8,9 @@ services:
       args:
         UN: jlovick
     entrypoint: /usr/bin/bash -c  /usr/local/bin/entrypoint.sh 
-
     stdin_open: true
     tty: true
     ports:
-            - "22:22"
-
-
+            - "2222:22"
+    volumes:
+      - "$HOME/code:/mnt/host:rw"
