@@ -398,6 +398,8 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 RUN mkdir -p /projects
 WORKDIR /projects
 
+ENV DISPLAY=host.docker.internal:0.0
+
 SHELL ["/bin/bash", "-c"]
 
 ENTRYPOINT  ["/bin/bash", "-c"]
